@@ -22,24 +22,72 @@ var (
 	ErrPrivateKeyNotRSA = errors.New("Private key is not an RSA key")
 )
 
+// Keys for custom private key
+const (
+	CustomMasterKeyType    = "master-key-type"
+	CustomEncryptedKey     = "encrypted-key"
+	CustomMasterKeyID      = "master-key-id"
+	CustomMasterKeyContext = "master-key-context"
+)
+
 func generatePrivateKeyAndCert(keySize int) (*rsa.PrivateKey, *x509.Certificate, error) {
 	return crypto.GeneratePrivateKeyAndCert(keySize, *validFor, *myCN)
 }
 
 func readKey(secret v1.Secret) (*rsa.PrivateKey, []*x509.Certificate, error) {
-	key, err := keyutil.ParsePrivateKeyPEM(secret.Data[v1.TLSPrivateKeyKey])
+	switch string(secret.Data[CustomMasterKeyType]) {
+	case "kms":
+		return readKeyWithKMS(secret)
+	default:
+		return readKeyFromSecret(secret)
+	}
+}
+
+func readKeyWithKMS(secret v1.Secret) (*rsa.PrivateKey, []*x509.Certificate, error) {
+	decryptedKey, err := crypto.DecryptWithKMS(
+		string(secret.Data[CustomEncryptedKey]),
+		string(secret.Data[CustomMasterKeyID]),
+		string(secret.Data[CustomMasterKeyContext]))
 	if err != nil {
 		return nil, nil, err
 	}
+	return generateKeyWithPrivateKey(decryptedKey)
+}
+
+func generateKeyWithPrivateKey(encodedKey []byte) (*rsa.PrivateKey, []*x509.Certificate, error) {
+	key, err := parseRSAKey(encodedKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	cert, err := crypto.GenerateCert(key, *validFor, *myCN)
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, []*x509.Certificate{cert}, nil
+}
+
+func readKeyFromSecret(secret v1.Secret) (*rsa.PrivateKey, []*x509.Certificate, error) {
+	key, err := parseRSAKey(secret.Data[v1.TLSPrivateKeyKey])
+	if err != nil {
+		return nil, nil, err
+	}
+	certs, err := certUtil.ParseCertsPEM(secret.Data[v1.TLSCertKey])
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, certs, nil
+}
+
+func parseRSAKey(encodedKey []byte) (*rsa.PrivateKey, error) {
+	key, err := keyutil.ParsePrivateKeyPEM(encodedKey)
+	if err != nil {
+		return nil, err
+	}
 	switch rsaKey := key.(type) {
 	case *rsa.PrivateKey:
-		certs, err := certUtil.ParseCertsPEM(secret.Data[v1.TLSCertKey])
-		if err != nil {
-			return nil, nil, err
-		}
-		return rsaKey, certs, nil
+		return rsaKey, nil
 	default:
-		return nil, nil, ErrPrivateKeyNotRSA
+		return nil, ErrPrivateKeyNotRSA
 	}
 }
 

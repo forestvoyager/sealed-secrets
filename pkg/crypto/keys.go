@@ -24,6 +24,12 @@ func GeneratePrivateKeyAndCert(keySize int, validFor time.Duration, cn string) (
 	return privKey, cert, nil
 }
 
+// GenerateCert generates a certificate signed by private key.
+func GenerateCert(key *rsa.PrivateKey, validFor time.Duration, cn string) (*x509.Certificate, error) {
+	r := rand.Reader
+	return SignKey(r, key, validFor, cn)
+}
+
 // SignKey returns a signed certificate.
 func SignKey(r io.Reader, key *rsa.PrivateKey, validFor time.Duration, cn string) (*x509.Certificate, error) {
 	// TODO: use certificates API to get this signed by the cluster root CA

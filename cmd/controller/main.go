@@ -50,6 +50,10 @@ var (
 
 	oldGCBehavior = flag.Bool("old-gc-behaviour", false, "Revert to old GC behavior where the controller deletes secrets instead of delegating that to k8s itself.")
 
+	// Add custom key support
+	useCustomKeys   = flag.Bool("use-custom-keys", false, "Use custom private keys")
+	customKeyPrefix = flag.String("custom-key-prefix", "sealed-secrets-custom-key", "Prefix used to name custom keys.")
+
 	// VERSION set from Makefile
 	VERSION = buildinfo.DefaultVersion
 
@@ -197,7 +201,12 @@ func main2() error {
 
 	myNs := myNamespace()
 
-	prefix, err := initKeyPrefix(*keyPrefix)
+	secretKeyPrefix := *keyPrefix
+	if *useCustomKeys {
+		secretKeyPrefix = *customKeyPrefix
+	}
+
+	prefix, err := initKeyPrefix(secretKeyPrefix)
 	if err != nil {
 		return err
 	}
@@ -216,12 +225,14 @@ func main2() error {
 		}
 	}
 
-	trigger, err := initKeyRenewal(keyRegistry, *keyRenewPeriod, ct)
-	if err != nil {
-		return err
-	}
+	if !*useCustomKeys {
+		trigger, err := initKeyRenewal(keyRegistry, *keyRenewPeriod, ct)
+		if err != nil {
+			return err
+		}
 
-	initKeyGenSignalListener(trigger)
+		initKeyGenSignalListener(trigger)
+	}
 
 	namespace := v1.NamespaceAll
 	if !*namespaceAll {

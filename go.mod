@@ -3,6 +3,7 @@ module github.com/bitnami-labs/sealed-secrets
 go 1.12
 
 require (
+	github.com/aws/aws-sdk-go v1.30.0 // indirect
 	github.com/bitnami-labs/flagenv v0.0.0-20190607135054-a87af7a1d6fc
 	github.com/bitnami-labs/pflagenv v0.0.0-20190702160147-b4d9f048d98f
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
@@ -17,6 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/throttled/throttled v2.2.2+incompatible
+	go.mozilla.org/sops/v3 v3.5.0
 	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	k8s.io/api v0.16.8
 	k8s.io/apimachinery v0.16.8
