@@ -53,8 +53,7 @@ var (
 	updateStatus = flag.Bool("update-status", false, "beta: if true, the controller will update the status subresource whenever it processes a sealed secret")
 
 	// Add custom key support
-	useCustomKeys   = flag.Bool("use-custom-keys", false, "Use custom private keys")
-	customKeyPrefix = flag.String("custom-key-prefix", "sealed-secrets-custom-key", "Prefix used to name custom keys.")
+	useCustomKeys = flag.Bool("use-custom-keys", false, "Use custom private keys")
 
 	// VERSION set from Makefile
 	VERSION = buildinfo.DefaultVersion
@@ -203,12 +202,7 @@ func main2() error {
 
 	myNs := myNamespace()
 
-	secretKeyPrefix := *keyPrefix
-	if *useCustomKeys {
-		secretKeyPrefix = *customKeyPrefix
-	}
-
-	prefix, err := initKeyPrefix(secretKeyPrefix)
+	prefix, err := initKeyPrefix(*keyPrefix)
 	if err != nil {
 		return err
 	}
