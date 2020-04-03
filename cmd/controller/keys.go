@@ -24,10 +24,10 @@ var (
 
 // Keys for custom private key
 const (
-	CustomMasterKeyType    = "master-key-type"
-	CustomEncryptedKey     = "encrypted-key"
-	CustomMasterKeyID      = "master-key-id"
-	CustomMasterKeyContext = "master-key-context"
+	CustomMasterKeyType    = "master.key.type"
+	CustomEncryptedKey     = "encrypted.key"
+	CustomMasterKeyID      = "master.key.id"
+	CustomMasterKeyContext = "master.key.context"
 )
 
 func generatePrivateKeyAndCert(keySize int) (*rsa.PrivateKey, *x509.Certificate, error) {
